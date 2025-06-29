@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>eCommerce With Stock</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f4f4f4;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .product {
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 15px;
+      width: 200px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .product img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
+    .product h3 {
+      margin: 10px 0;
+    }
+
+    .product p {
+      color: green;
+      font-weight: bold;
+    }
+
+    .product .stock {
+      color: #555;
+      font-size: 14px;
+      margin: 5px 0;
+    }
+
+    .product button {
+      background: #ff6347;
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 5px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    .product button:disabled {
+      background: gray;
+      cursor: not-allowed;
+    }
+
+    .cart {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 15px;
+      width: 300px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .cart h2 {
+      margin-bottom: 10px;
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .cart-item span {
+      flex: 1;
+    }
+
+    .cart-buttons {
+      display: flex;
+      gap: 5px;
+    }
+
+    .cart-buttons button {
+      padding: 2px 6px;
+      background: #ff6347;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .total {
+      font-weight: bold;
+      text-align: right;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🛒 eCommerce App With Stock</h1>
+
+<div class="container" id="product-list"></div>
+
+<div class="cart">
+  <h2>Your Cart</h2>
+  <div id="cart-items"></div>
+  <div class="total" id="total">Total: ₹0</div>
+</div>
+
+<script>
+  const products = [
+    { name: "Biryani", price: 280, stock: 3, image: "https://i.ibb.co/jJdBpKr/biryani.jpg" },
+    { name: "Dosa", price: 80, stock: 5, image: "https://i.ibb.co/jzMgZxb/dosa.jpg" },
+    { name: "Idly", price: 40, stock: 4, image: "https://i.ibb.co/L95yZCJ/idly.jpg" },
+    { name: "Samosa", price: 30, stock: 2, image: "https://i.ibb.co/8jMWjGt/samosa.jpg" },
+    { name: "Ice Cream", price: 160, stock: 1, image: "https://i.ibb.co/tZ6MyF5/ice.jpg" },
+    { name: "Burger", price: 90, stock: 6, image: "https://i.ibb.co/60QpvwY/burger.jpg" }
+  ];
+
+  const cart = {};
+  const productList = document.getElementById("product-list");
+  const cartItemsDiv = document.getElementById("cart-items");
+  const totalDiv = document.getElementById("total");
+
+  // Render product cards
+  function renderProducts() {
+    productList.innerHTML = "";
+    products.forEach(product => {
+      const inCartQty = cart[product.name]?.quantity || 0;
+      const remaining = product.stock - inCartQty;
+      const card = document.createElement("div");
+      card.className = "product";
+      card.innerHTML = `
+        <img src="${product.image}" alt="${product.name}">
+        <h3>${product.name}</h3>
+        <p>₹${product.price}</p>
+        <div class="stock">Available: ${remaining}</div>
+        <button onclick="addToCart('${product.name}')" ${remaining <= 0 ? "disabled" : ""}>
+          ${remaining <= 0 ? "Out of Stock" : "Add to Cart"}
+        </button>
+      `;
+      productList.appendChild(card);
+    });
+  }
+
+  // Add to cart
+  function addToCart(name) {
+    const product = products.find(p => p.name === name);
+    if (!product) return;
+
+    const inCart = cart[name]?.quantity || 0;
+    if (inCart >= product.stock) return alert("No more stock available!");
+
+    if (!cart[name]) {
+      cart[name] = { quantity: 1, price: product.price, image: product.image };
+    } else {
+      cart[name].quantity++;
+    }
+    renderCart();
+    renderProducts();
+  }
+
+  // Render cart
+  function renderCart() {
+    cartItemsDiv.innerHTML = "";
+    let total = 0;
+
+    for (let name in cart) {
+      const item = cart[name];
+      const itemTotal = item.quantity * item.price;
+      total += itemTotal;
+
+      const div = document.createElement("div");
+      div.className = "cart-item";
+      div.innerHTML = `
+        <span>${name} x ${item.quantity} = ₹${itemTotal}</span>
+        <div class="cart-buttons">
+          <button onclick="changeQty('${name}', 1)">+</button>
+          <button onclick="changeQty('${name}', -1)">-</button>
+        </div>
+      `;
+      cartItemsDiv.appendChild(div);
+    }
+
+    totalDiv.textContent = `Total: ₹${total}`;
+  }
+
+  // Change quantity in cart
+  function changeQty(name, delta) {
+    const product = products.find(p => p.name === name);
+    if (!cart[name]) return;
+
+    if (delta === 1 && cart[name].quantity >= product.stock) {
+      alert("Reached max stock!");
+      return;
+    }
+
+    cart[name].quantity += delta;
+
+    if (cart[name].quantity <= 0) {
+      delete cart[name];
+    }
+
+    renderCart();
+    renderProducts();
+  }
+
+  renderProducts();
+</script>
+
+</body>
+</html>
